@@ -9,8 +9,8 @@
         /* General body styling for background and text alignment */
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #f4f4f9;
-            color: #333;
+            background-color: #E3F2FD; /* Lighter blue background for a more pleasant look */
+            color: #424242; /* Darker grey for better readability */
             text-align: center;
             margin: 0;
             padding: 20px;
@@ -21,8 +21,20 @@
 
         /* Styling for the game title and any headers */
         h1 {
-            color: #005f73;
+            color: #0D47A1; /* Deep blue for better visual hierarchy */
             margin-bottom: 20px;
+            font-size: 2.5em;
+        }
+
+        #fileUpload {
+            border: 2px solid #005f73;
+            padding: 20px;
+            display: none; /* Using flexbox to align children */
+            flex-direction: column; /* Align children vertically */
+            align-items: center; /* Center-align the flex items horizontally */
+            justify-content: center; /* Center-align the flex items vertically */
+            margin: auto; /* Centers the div itself if it has a specified width */
+            width: fit-content; /* Optional: Adjust width to fit its content */
         }
 
         /* Container for game elements to manage spacing and alignment */
@@ -31,14 +43,16 @@
             max-width: 800px;
             margin: auto;
             padding: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
             background-color: #ffffff;
             border-radius: 10px;
+            border: 3px solid #0D47A1; /* Thicker border for emphasis */
         }
 
         #gameBoard {
+            margin-top: 10px;
             background-color: #ffffff; /* White for main game board */
-            border: 2px solid #005f73; /* Deep blue border */
+            border: 0px solid #005f73; /* Deep blue border */
             color: #001219; /* Dark blue text */
         }
 
@@ -80,14 +94,54 @@
         }
 
         button {
-            background-color: #003566;
+            background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%); /* Gradient background */
             color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 30px; /* Rounded corners */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
             cursor: pointer;
-            transition: background 0.3s;
+            outline: none;
+            transition: transform 0.2s, box-shadow 0.2s; /* Smooth transitions for interaction */
         }
 
-        button:hover {
-            background-color: #002244;
+        button:hover, button:focus {
+            transform: scale(1.05); /* Slightly enlarge button on hover/focus */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Increased shadow for 3D effect */
+        }
+
+        button:active {
+            transform: scale(0.95); /* Slight shrink effect when pressed */
+        }
+
+        .button {
+            display: inline-block;
+            background: linear-gradient(to right, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .button:hover {
+            background: linear-gradient(to right, #2575fc 0%, #6a11cb 100%);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .button:active {
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        #answers {
+            column-count: 2;
         }
 
         .answer {
@@ -111,12 +165,15 @@
             <input type="text" id="player2name" placeholder="Enter Player 2 Name">
             <button onclick="setupPlayers()">Setup Players</button>
         </div>
-        <input type="file" id="fileInput" accept=".csv" style="display:none;">
-        <div id="helperText" style="display:none; color: #ccc; margin-top: 20px;">
-            <p>Please upload a CSV file with the following format (multiple rows/rounds are allowed):</p>
-            <p>Question, Answer 1, Points 1, Answer 2, Points 2, ..., Answer N, Points N</p>
-            <p>Example:</p>
-            <p>"What is the capital of France?", "Paris", 30, "Lyon", 10</p>
+        <div id="fileUpload">
+            <div id="helperText" style="display:none; color: #ccc;">
+                <p>Please upload a CSV file with the following format (multiple rows/rounds are allowed):</p>
+                <p>Question, Answer 1, Points 1, Answer 2, Points 2, ..., Answer N, Points N</p>
+                <p>Example:</p>
+                <p>"What is the capital of France?", "Paris", 30, "Lyon", 10</p>
+            </div>
+            <input type="file" id="fileInput" accept=".csv" style="display:none;">
+            <label for="fileInput" class="button">Upload CSV File</label>
         </div>
         <div id="gameBoard"></div>
         <div id="inputArea" style="display:none;">
@@ -136,10 +193,11 @@
 
             // Reset UI elements to their default state
             document.getElementById('playerSetup').style.display = 'block';
+            document.getElementById('fileUpload').style.display = 'none';
             document.getElementById('fileInput').style.display = 'none';
+            document.getElementById('helperText').style.display = 'none';
             document.getElementById('inputArea').style.display = 'none';
             document.getElementById('newGameButton').style.display = 'none';
-            document.getElementById('helperText').style.display = 'none';
             document.getElementById('gameBoard').innerHTML = '';
 
             // Reset player input fields if necessary
@@ -153,15 +211,13 @@
             initializeGame();
         };
 
-
-
         function setupPlayers() {
             const player1 = document.getElementById('player1name').value.trim();
             const player2 = document.getElementById('player2name').value.trim();
             if (player1 && player2) {
                 players = [{ name: player1, score: 0, attempts: 3 }, { name: player2, score: 0, attempts: 3 }];
                 document.getElementById('playerSetup').style.display = 'none';
-                document.getElementById('fileInput').style.display = 'block';
+                document.getElementById('fileUpload').style.display = 'flex';
                 document.getElementById('helperText').style.display = 'block';
                 createScoreboard();
             } else {
@@ -185,14 +241,14 @@
                 nextRound();
             };
             reader.readAsText(event.target.files[0]);
-            document.getElementById('fileInput').style.display = 'none';
-            document.getElementById('helperText').style.display = 'none';
+            document.getElementById('fileUpload').style.display = 'none';
             document.getElementById('inputArea').style.display = 'flex';
             document.getElementById('newGameButton').style.display = 'block';
         });
 
         function nextRound() {
             if (currentRound < rounds.length) {
+                document.getElementById('gameBoard').style.border = '2px solid #005f73';
                 const round = rounds[currentRound];
                 document.getElementById('gameBoard').innerHTML = '<h2>' + round.question + '</h2>';
                 const answersContainer = document.createElement('div');
@@ -245,6 +301,18 @@
             }
         }
 
+        document.getElementById('player1name').addEventListener('keypress', function(event) {
+            if (event.key === "Enter") {
+                setupPlayers();
+            }
+        });
+
+        document.getElementById('player2name').addEventListener('keypress', function(event) {
+            if (event.key === "Enter") {
+                setupPlayers();
+            }
+        });
+
         document.getElementById('answerInput').addEventListener('keypress', function(event) {
             if (event.key === "Enter") {
                 checkAnswer();
@@ -289,11 +357,11 @@
             document.getElementById('player2name').value = '';
 
             // Reset and show initial UI elements
+            document.getElementById('gameBoard').style.border = '0px solid #005f73';
             document.getElementById('playerSetup').style.display = 'block';
-            document.getElementById('fileInput').style.display = 'none'; // Keep file input hidden until players are set up again
+            document.getElementById('fileUpload').style.display = 'none';
             document.getElementById('inputArea').style.display = 'none';
             document.getElementById('newGameButton').style.display = 'none'; // Hide the new game button again
-            document.getElementById('helperText').style.display = 'none'; // Ensure helper text is also hidden
         }
 
     </script>
