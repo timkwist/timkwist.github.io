@@ -4,35 +4,156 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Family Feud Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: Arial, sans-serif; background: #333; color: white; text-align: center; padding: 20px; }
-        #gameBoard { background: navy; padding: 20px; width: 800px; margin: auto; border-radius: 10px; }
-        .answer { margin: 10px auto; padding: 10px; background: blue; border-radius: 5px; width: 80%; font-size: 24px; display: block; color: white;  }
-        .scoreboard { display: flex; justify-content: space-around; margin-bottom: 20px; }
-        .score { background: #222; padding: 10px 20px; font-size: 20px; border-radius: 10px; }
-        input, button { padding: 10px; font-size: 16px; margin-top: 10px; }
-        #inputArea { display: flex; flex-direction: column; align-items: center; }
-        #answers {
-            column-count: 2;
+        /* General body styling for background and text alignment */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center-aligns all children in the body */
+        }
+
+        /* Styling for the game title and any headers */
+        h1 {
+            color: #005f73;
+            margin-bottom: 20px;
+        }
+
+        /* Container for game elements to manage spacing and alignment */
+        #gameContainer {
+            width: 90%;
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: #ffffff;
+            border-radius: 10px;
+        }
+
+        #gameBoard {
+            background-color: #ffffff; /* White for main game board */
+            border: 2px solid #005f73; /* Deep blue border */
+            color: #001219; /* Dark blue text */
+        }
+
+        /* Flexbox for scoreboard to distribute space evenly */
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .score {
+            background-color: #94d2bd;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            flex: 1; /* Allows each score element to take equal space */
+            margin: 0 10px;
+            text-align: center;
+        }
+
+        /* Styling for the input area to align text input and button nicely */
+        #inputArea {
+            display: flex;
+            justify-content: center;
             width: 100%;
+        }
+
+        input[type="text"], button {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 2px solid #005f73;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input[type="text"] {
+            flex-grow: 1; /* Makes the input field grow to fill the space */
+        }
+
+        button {
+            background-color: #003566;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #002244;
+        }
+
+        .answer {
+            background-color: #0a9396; /* Teal background for answers */
+            color: #e9d8a6; /* Off-white text */
+            border-radius: 5px;
+            margin: 10px auto;
+            padding: 10px;
+            width: 80%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
         }
     </style>
 </head>
 <body>
-    <h1>Family Feud Game</h1>
-    <div id="playerSetup">
-        <input type="text" id="player1name" placeholder="Enter Player 1 Name">
-        <input type="text" id="player2name" placeholder="Enter Player 2 Name">
-        <button onclick="setupPlayers()">Setup Players</button>
-    </div>
-    <input type="file" id="fileInput" accept=".csv" style="display:none;">
-    <div id="gameBoard"></div>
-    <div id="inputArea" style="display:none;">
-        <input type="text" id="answerInput" placeholder="Enter your answer" />
-        <button onclick="checkAnswer()">Check Answer</button>
+    <div id="gameContainer">
+        <h1>Family Feud Game</h1>
+        <button id="newGameButton" style="display:none;" onclick="startNewGame()">Start New Game</button>
+        <div id="playerSetup">
+            <input type="text" id="player1name" placeholder="Enter Player 1 Name">
+            <input type="text" id="player2name" placeholder="Enter Player 2 Name">
+            <button onclick="setupPlayers()">Setup Players</button>
+        </div>
+        <input type="file" id="fileInput" accept=".csv" style="display:none;">
+        <div id="helperText" style="display:none; color: #ccc; margin-top: 20px;">
+            <p>Please upload a CSV file with the following format (multiple rows/rounds are allowed):</p>
+            <p>Question, Answer 1, Points 1, Answer 2, Points 2, ..., Answer N, Points N</p>
+            <p>Example:</p>
+            <p>"What is the capital of France?", "Paris", 30, "Lyon", 10</p>
+        </div>
+        <div id="gameBoard"></div>
+        <div id="inputArea" style="display:none;">
+            <input type="text" id="answerInput" placeholder="Enter your answer">
+            <button onclick="checkAnswer()">Check Answer</button>
+        </div>
     </div>
     <script>
         let currentRound = 0, currentPlayer = 0, rounds = [], players = [];
+
+        function initializeGame() {
+            // Reset game variables
+            currentRound = 0;
+            currentPlayer = 0;
+            rounds = [];
+            players = [];
+
+            // Reset UI elements to their default state
+            document.getElementById('playerSetup').style.display = 'block';
+            document.getElementById('fileInput').style.display = 'none';
+            document.getElementById('inputArea').style.display = 'none';
+            document.getElementById('newGameButton').style.display = 'none';
+            document.getElementById('helperText').style.display = 'none';
+            document.getElementById('gameBoard').innerHTML = '';
+
+            // Reset player input fields if necessary
+            document.getElementById('player1name').value = '';
+            document.getElementById('player2name').value = '';
+        }
+
+        window.onload = function() {
+            localStorage.clear();
+            sessionStorage.clear();
+            initializeGame();
+        };
+
+
 
         function setupPlayers() {
             const player1 = document.getElementById('player1name').value.trim();
@@ -41,7 +162,7 @@
                 players = [{ name: player1, score: 0, attempts: 3 }, { name: player2, score: 0, attempts: 3 }];
                 document.getElementById('playerSetup').style.display = 'none';
                 document.getElementById('fileInput').style.display = 'block';
-                document.getElementById('inputArea').style.display = 'flex';
+                document.getElementById('helperText').style.display = 'block';
                 createScoreboard();
             } else {
                 alert('Please enter names for both players.');
@@ -64,6 +185,10 @@
                 nextRound();
             };
             reader.readAsText(event.target.files[0]);
+            document.getElementById('fileInput').style.display = 'none';
+            document.getElementById('helperText').style.display = 'none';
+            document.getElementById('inputArea').style.display = 'flex';
+            document.getElementById('newGameButton').style.display = 'block';
         });
 
         function nextRound() {
@@ -89,7 +214,6 @@
                 alert('Game over!');
             }
         }
-
 
         function checkAnswer() {
             if (players[currentPlayer].attempts > 0) {
@@ -121,6 +245,11 @@
             }
         }
 
+        document.getElementById('answerInput').addEventListener('keypress', function(event) {
+            if (event.key === "Enter") {
+                checkAnswer();
+            }
+        });
 
         function switchPlayer() {
             currentPlayer = (currentPlayer + 1) % 2;
@@ -146,6 +275,27 @@
             document.getElementById('player2score').textContent = players[1].name + ': ' + players[1].score + ' Points, Attempts: ' + players[1].attempts;
             document.getElementById('currentTurn').textContent = 'Current Turn: ' + players[currentPlayer].name;
         }
+
+        function startNewGame() {
+            // Reset game variables
+            currentRound = 0;
+            currentPlayer = 0;
+            rounds = [];
+            players = [];
+            
+            // Clear game board and input fields
+            document.getElementById('gameBoard').innerHTML = '';
+            document.getElementById('player1name').value = '';
+            document.getElementById('player2name').value = '';
+
+            // Reset and show initial UI elements
+            document.getElementById('playerSetup').style.display = 'block';
+            document.getElementById('fileInput').style.display = 'none'; // Keep file input hidden until players are set up again
+            document.getElementById('inputArea').style.display = 'none';
+            document.getElementById('newGameButton').style.display = 'none'; // Hide the new game button again
+            document.getElementById('helperText').style.display = 'none'; // Ensure helper text is also hidden
+        }
+
     </script>
 </body>
 </html>
