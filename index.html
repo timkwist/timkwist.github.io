@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Feud Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #333; color: white; text-align: center; padding: 20px; }
+        #gameBoard { background: navy; padding: 20px; width: 800px; margin: auto; border-radius: 10px; }
+        .answer { margin: 10px auto; padding: 10px; background: blue; border-radius: 5px; width: 80%; font-size: 24px; display: block; color: white;  }
+        .scoreboard { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .score { background: #222; padding: 10px 20px; font-size: 20px; border-radius: 10px; }
+        input, button { padding: 10px; font-size: 16px; margin-top: 10px; }
+        #inputArea { display: flex; flex-direction: column; align-items: center; }
+        #answers {
+            column-count: 2;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Family Feud Game</h1>
+    <div id="playerSetup">
+        <input type="text" id="player1name" placeholder="Enter Player 1 Name">
+        <input type="text" id="player2name" placeholder="Enter Player 2 Name">
+        <button onclick="setupPlayers()">Setup Players</button>
+    </div>
+    <input type="file" id="fileInput" accept=".csv" style="display:none;">
+    <div id="gameBoard"></div>
+    <div id="inputArea" style="display:none;">
+        <input type="text" id="answerInput" placeholder="Enter your answer" />
+        <button onclick="checkAnswer()">Check Answer</button>
+    </div>
+    <script>
+        let currentRound = 0, currentPlayer = 0, rounds = [], players = [];
+
+        function setupPlayers() {
+            const player1 = document.getElementById('player1name').value.trim();
+            const player2 = document.getElementById('player2name').value.trim();
+            if (player1 && player2) {
+                players = [{ name: player1, score: 0, attempts: 3 }, { name: player2, score: 0, attempts: 3 }];
+                document.getElementById('playerSetup').style.display = 'none';
+                document.getElementById('fileInput').style.display = 'block';
+                document.getElementById('inputArea').style.display = 'flex';
+                createScoreboard();
+            } else {
+                alert('Please enter names for both players.');
+            }
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const lines = event.target.result.split('\n');
+                rounds = lines.map(line => {
+                    const parts = line.split(',');
+                    const question = parts[0];
+                    const answers = [];
+                    for (let i = 1; i < parts.length; i += 2) {
+                        answers.push({ answer: parts[i].trim(), points: parseInt(parts[i+1], 10), revealed: false });
+                    }
+                    return { question, answers, answersRevealed: 0 };
+                });
+                nextRound();
+            };
+            reader.readAsText(event.target.files[0]);
+        });
+
+        function nextRound() {
+            if (currentRound < rounds.length) {
+                const round = rounds[currentRound];
+                document.getElementById('gameBoard').innerHTML = '<h2>' + round.question + '</h2>';
+                const answersContainer = document.createElement('div');
+                answersContainer.id = 'answers';
+                
+                round.answers.forEach((item, index) => {
+                    const answerDiv = document.createElement('div');
+                    answerDiv.className = 'answer';
+                    answerDiv.textContent = (index + 1).toString(); // Display position number
+                    answerDiv.id = 'answer' + index;
+                    answersContainer.appendChild(answerDiv);
+                });
+                document.getElementById('gameBoard').appendChild(answersContainer);
+                currentPlayer = currentRound % 2;
+                players.forEach(player => player.attempts = 3);
+                createScoreboard();
+                currentRound++;
+            } else {
+                alert('Game over!');
+            }
+        }
+
+
+        function checkAnswer() {
+            if (players[currentPlayer].attempts > 0) {
+                const input = document.getElementById('answerInput').value.toLowerCase();
+                const round = rounds[currentRound - 1];
+                const foundIndex = round.answers.findIndex(item => item.answer.toLowerCase() === input && !item.revealed);
+                if (foundIndex !== -1) {
+                    const found = round.answers[foundIndex];
+                    found.revealed = true;
+                    players[currentPlayer].score += found.points;
+                    round.answersRevealed++;
+                    document.getElementById('answer' + foundIndex).textContent = found.answer + ' (' + found.points + ' points)';
+                    if (round.answersRevealed === round.answers.length) {
+                        alert('Round complete! All answers revealed.');
+                        nextRound();
+                    }
+                } else {
+                    players[currentPlayer].attempts--;
+                    if (players[currentPlayer].attempts === 0) {
+                        alert(players[currentPlayer].name + ' is out of attempts!');
+                        switchPlayer();
+                    }
+                }
+                document.getElementById('answerInput').value = ''; // Clear input field
+                updateScoreboard();
+            } else {
+                alert('No attempts left!');
+                switchPlayer();
+            }
+        }
+
+
+        function switchPlayer() {
+            currentPlayer = (currentPlayer + 1) % 2;
+            if (players[0].attempts === 0 && players[1].attempts === 0) {
+                alert('All attempts used up. Starting next round.');
+                nextRound();
+            } else {
+                alert('Switching to ' + players[currentPlayer].name);
+            }
+            updateScoreboard();
+        }
+
+        function createScoreboard() {
+            document.getElementById('gameBoard').innerHTML += '<div class="scoreboard">' +
+                '<div class="score" id="player1score">' + players[0].name + ': ' + players[0].score + ' Points, Attempts: ' + players[0].attempts + '</div>' +
+                '<div class="score" id="player2score">' + players[1].name + ': ' + players[1].score + ' Points, Attempts: ' + players[1].attempts + '</div>' +
+                '<div class="score" id="currentTurn">Current Turn: ' + players[currentPlayer].name + '</div>' +
+                '</div>';
+        }
+
+        function updateScoreboard() {
+            document.getElementById('player1score').textContent = players[0].name + ': ' + players[0].score + ' Points, Attempts: ' + players[0].attempts;
+            document.getElementById('player2score').textContent = players[1].name + ': ' + players[1].score + ' Points, Attempts: ' + players[1].attempts;
+            document.getElementById('currentTurn').textContent = 'Current Turn: ' + players[currentPlayer].name;
+        }
+    </script>
+</body>
+</html>
